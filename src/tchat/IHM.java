@@ -15,38 +15,42 @@ import javax.swing.border.EmptyBorder;
 
 public class IHM extends JFrame {
 	
-	
-	
-	private String nickname = "nickname";
-	
+	//FINALS
 	private final static String newline = "\n";
+	private final SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm");
+	
+	//GENERAL VAR
+	private String nickname = "nickname";
 	private String choosenone="";
+	private int delay = 15000; //milliseconds
+	private String texte_date;
 	
+	//GENERAL
+	private JPanel panel1;
+	Vector<LinkActionListener> recepteurs = new Vector<LinkActionListener>(); // liste des recepteurs d'événements
+	
+	//PARTI CANAUX
+	private JPanel zonecanaux;
 	private JButton bouton1 ;
-	private JButton bouton2 ;
 	
-    
+	private JPanel panellistderoulante ;
 	private JLabel listderoulante;
 	private JLabel labelpseudo;
-	private JLabel labelnick;
-	private JTextField writenick;
-	private JPanel panel1 ;
+	private JPanel zoneecriturenick;
 	
 	private JComboBox<String> combo = new JComboBox<String>();
-	private JPanel panellistderoulante ;
 	
-	private JPanel zoneecriturenick;
+	//PARTI AFFICHAGE
 	private JPanel zoneecriture;
-	private JPanel zonecanaux;
-	
-	private JTextArea display;
+	private JLabel labelnick;
+    private JScrollPane scroll;
+    private JTextArea display;
 	private JTextField write;
-	private int delay = 30000; //milliseconds
+	private JTextField writenick;
 	
-	private final SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm");
-	private String texte_date; 
 	
-	Vector<LinkActionListener> recepteurs = new Vector<LinkActionListener>(); // liste des recepteurs d'événements
+
+	//LIAISON LISTENER => INTERFACE => SERVEUR /////////////////////////////////////////////////////////////////////////////
 	
 	public void addServ2ActionListener(LinkActionListener e)
 	{
@@ -56,7 +60,7 @@ public class IHM extends JFrame {
 	
 	public void affiche(String messageinc)
 	{
-		display.append(messageinc + newline);
+		display.append( messageinc + newline);
 	}
 	
 	public void leave_actionPerformed(ActionEvent e)
@@ -87,6 +91,7 @@ public class IHM extends JFrame {
 		    write.setText("");
 	}
 	
+	//GETTER SETTER ///////////////////////////////////////////////////////////////////////////////////////////
 	public void Set_list_Nick(String str){combo.addItem(str);}
 	
 	public void Remove_List_Nick(String str){combo.removeItem(str);}
@@ -98,6 +103,8 @@ public class IHM extends JFrame {
 		return nickname;
 	}
 	
+	
+	// CONSTUCT  /////////////////////////////////////////////////////////////////////////////////////////// 
 	public IHM() throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException
 	{
 		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -108,7 +115,7 @@ public class IHM extends JFrame {
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		//setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
-	// fenetre
+		// FENETRE ///////////////////////
 		texte_date = sdf.format(new Date());
 		this.setSize(550,300);
 		panel1 = new JPanel();
@@ -123,11 +130,19 @@ public class IHM extends JFrame {
 		listderoulante = new JLabel("Liste pseudo :");
 		panellistderoulante = new JPanel();
 		
+		this.setTitle("système de ClavardAge diStribué Interactif MultutilIsateur temps Réel");
+		
+		display.setLineWrap(true);
+		display.setWrapStyleWord(true);
+		
 		labelnick = new JLabel("      " +   nickname + " " + texte_date);
 		
+		JScrollPane scroll = new JScrollPane(display);
+		
+				
 		this.getContentPane().add(panel1);
 		bouton1 = new JButton(" STOP ");
-		bouton2 = new JButton("canal 2 ");
+		//bouton2 = new JButton("canal 2 ");
 		
 		panellistderoulante.setBorder(new EmptyBorder(5, 10, 15, 10));
 		panellistderoulante.setLayout(new BorderLayout());
@@ -152,21 +167,22 @@ public class IHM extends JFrame {
 		zoneecriturenick.add(writenick);
 		zoneecriturenick.add(labelpseudo, BorderLayout.NORTH);
 		
-		zoneecriture.add(display);
+		zoneecriture.add(scroll);
 		zoneecriture.add(write, BorderLayout.SOUTH);
 		zoneecriture.add(labelnick, BorderLayout.NORTH);
 		
 
 		
 		
-		//listeners
-		
+		// LISTENERS //////////////////////////////////////////////////////////////////
+		// LISTENER CROIX ROUGE
 		this.addWindowListener(new java.awt.event.WindowAdapter() {
 		      public void windowClosing(WindowEvent e) {
 		      JOptionPane.showMessageDialog(null,"Utilise le bouton STOP rohhh");
 		      }
 		    });
 		
+		// LISTENER QUITTE
 		bouton1.addActionListener(new ActionListener()
 		{
 			public void actionPerformed(ActionEvent e)
@@ -178,19 +194,18 @@ public class IHM extends JFrame {
 		}
 				);
 		
-		
+		// LISTENER CONNECTION PEER
 		combo.addActionListener(new ActionListener()
-		{	
-			
+		{		
 			public void actionPerformed(ActionEvent e)
 			{
 				choosenone=(String)combo.getSelectedItem();
 				senduser_actionPerformed(e);
-				
 			}
 		}
 		);
 		
+		// LISTENER ECRITURE TEXTE
 		write.addActionListener(new ActionListener()
 		{	
 			private String text;
@@ -203,12 +218,10 @@ public class IHM extends JFrame {
 		}
 		);
 		
+		// LISTENER CHANGE PSEUDO
 		writenick.addActionListener(new ActionListener()
 		{	
 			private String text;
-			
-			
-			
 			public void actionPerformed(ActionEvent e)
 			{
 				boolean ok=true;
@@ -237,7 +250,7 @@ public class IHM extends JFrame {
 		}
 		);
 		
-		
+		// LISTENER HORLOGE
 		 ActionListener taskPerformer = new ActionListener() {
 		 public void actionPerformed(ActionEvent evt) {
 			  
@@ -247,7 +260,9 @@ public class IHM extends JFrame {
 			  
 		      }
 		  };
-		  new Timer(delay, taskPerformer).start();
+		  
+		//launch horloge
+		new Timer(delay, taskPerformer).start();
 		//visible
 		this.setVisible(true);
 		
