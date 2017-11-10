@@ -115,7 +115,7 @@ public class IHM extends JFrame {
 	
 	private boolean verifieAction(String message) {
 	   
-	      if (JOptionPane.showConfirmDialog(null, message,"Ce texte n'est pas enregistré",JOptionPane.YES_NO_OPTION)==1){return false;}
+	      if (JOptionPane.showConfirmDialog(null, message,"Accepter vous la session ?",JOptionPane.YES_NO_OPTION)==1){return false;}
 	      else{return true;}
 	    
 	    

@@ -6,6 +6,7 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -27,13 +28,15 @@ public class Serveur implements Runnable, LinkActionListener {
 	private boolean dernierarrivant = false;
 	private boolean test =true;
 	private int indicesession=0;
-	private int tableauSession[]= {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 	
+	//private int numactivesession;
+	private InetAddress Adresseactivesession;
 	
 	private String ancienpseudo;
 	private String actuelpseudo="nickname";
 	private long timing ;
 	private String messtext;
+	ArrayList <Session> mesSessions = new ArrayList<Session>();
 	HashMap<String, String> hmap = new HashMap<String, String>();
 	//DATE
 	private final SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm");
@@ -66,12 +69,14 @@ public class Serveur implements Runnable, LinkActionListener {
 	
 	private void session(int indicesession,String addrdistante)
 	{
-		Session sess = new Session(indicesession,addrdistante);
+		mesSessions.add(indicesession, new Session(indicesession,addrdistante));
+		mesSessions.get(indicesession).addServ2ActionListener(this);
+		indicesession=indicesession+1;
 	};
 	
 	public void gestion_control(String addri,String data) throws UnknownHostException
 	{
-			
+		System.out.println("test : "+addri);
 		String[] tab = data.split(" ");
     	
     	try {
@@ -151,18 +156,25 @@ public class Serveur implements Runnable, LinkActionListener {
     					OK=interfacee.Summon_box();
     					if(OK)
     					{
+    					System.out.println("Acceptéééé");
     					acceptco=true;
-    					session(indicesession,addri);
+    					//session(indicesession,addri);
     					addr=InetAddress.getByName(addri);
-    					sendpacket(8);
+    					
     					}
-    					else{acceptco=false;}
+    					
+    					else
+    					{
+    						acceptco=false;
+    						System.out.println("Refuséééé");
+    					}
     					addr=InetAddress.getByName(addri);
     					sendpacket(8);
     				}
     				
     				if(tab[1].equals("R"))
     				{
+    					System.out.println("R");
     					if(tab[2].equals("OK"))
     					{
     						session(indicesession,addri);
@@ -181,9 +193,20 @@ public class Serveur implements Runnable, LinkActionListener {
 		
 		switch(code)
 		{
+		
+		case 0: System.out.println("paquet lancement data unicast session");
+				String texte_date = sdf.format(new Date());
+				
+				
+				mess = messtext;
+				
+				
+				
+				break;
+		
 		case 1: System.out.println("paquet lancement data");
-				String texte_date = sdf.format(new Date());	
-				mess = interfacee.getNick()+" "+"["+texte_date+"]" + " dit : "+ "\n"  + messtext;
+				String texte_date2 = sdf.format(new Date());	
+				mess = interfacee.getNick()+" "+"["+texte_date2+"]" + " dit : "+ "\n"  + messtext;
 				
 				break;
 				
@@ -228,11 +251,11 @@ public class Serveur implements Runnable, LinkActionListener {
 				
 				if(acceptco==true)
 				{
-					mess="ccccccccc A OK";
+					mess="ccccccccc R OK";
 				}
 				else
 				{
-					mess="ccccccccc A NO";
+					mess="ccccccccc R NO";
 				}
 				
 				break;
@@ -254,7 +277,7 @@ public class Serveur implements Runnable, LinkActionListener {
 		
 		if (test){mess= "iiiiiiiii "+"trust"+" 192.168.2.5"+" theo"+ " 192.168.56.1";test=false;}
 		
-		System.out.println(mess);
+		System.out.println("ENVOI DE "+mess);
 		byte [] buffer= mess.getBytes() ;
 	    DatagramPacket datag = new DatagramPacket(buffer,0,buffer.length, addr,port);
 	    try {
@@ -277,9 +300,26 @@ public class Serveur implements Runnable, LinkActionListener {
 		else{return false;}
 	}
 	
-	public void actionPerformed5(String user, int numsession) {
-		// TODO Auto-generated method stub
+	
+	public void actionPerformed6(int numsession) {
 		
+		//trame reset by peer
+		//kill object
+		mesSessions.remove(numsession);
+		
+	}
+	
+	public void actionPerformed5(String mess3, int numsession) {
+		
+		
+		System.out.println("TEEXXXTE3 : "+ mess3 );
+		String texte_date = sdf.format(new Date());
+		messtext =interfacee.getNick()+" "+"["+texte_date+"]" + " dit : "+ "\n"  + mess3;
+		mesSessions.get(numsession).Affiche(messtext);
+		messtext="U "+messtext;
+		Adresseactivesession=mesSessions.get(numsession).get_addr();
+		addr=Adresseactivesession;
+		sendpacket(0);
 	}
 	
 	public void actionPerformed4(String user) {
@@ -383,7 +423,7 @@ public class Serveur implements Runnable, LinkActionListener {
 	        {
 	        	System.out.println("trame de controle");
 	        	InetAddress addrext = datag.getAddress();
-	        	String addr = addrext.toString();
+	        	String addr = addrext.getHostAddress();
 	        	try {
 					gestion_control(addr,data);
 				} catch (UnknownHostException e) {
@@ -395,8 +435,19 @@ public class Serveur implements Runnable, LinkActionListener {
 	        
 	        else
 	        {
-	        	System.out.println("trame de data");
-	        	interfacee.affiche(data + " ");
+	        	String[] tab = data.split(" ");
+	        	if(tab[0].equals("U"))
+	        	{
+	        		
+	        		System.out.println("trame de data unicast");
+	        		data=data.substring(2);
+	        		mesSessions.get(indicesession).Affiche(data);
+	        	}
+	        	else
+	        	{
+	        		System.out.println("trame de data");
+	        		interfacee.affiche(data + " ");
+	        	}
 	        }
 	        
 	      }
@@ -413,6 +464,10 @@ public class Serveur implements Runnable, LinkActionListener {
 			System.out.println(tempo);*/
 		    
 		}
+
+		
+
+		
 		
 
 		
