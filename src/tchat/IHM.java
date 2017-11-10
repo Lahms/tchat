@@ -24,7 +24,8 @@ public class IHM extends JFrame {
 	private String choosenone="";
 	private int delay = 15000; //milliseconds
 	private String texte_date;
-	
+	boolean modifie = false ;
+	int bugjcombo = 0 ;
 	//GENERAL
 	private JPanel panel1;
 	Vector<LinkActionListener> recepteurs = new Vector<LinkActionListener>(); // liste des recepteurs d'événements
@@ -103,6 +104,22 @@ public class IHM extends JFrame {
 		return nickname;
 	}
 	
+	public boolean Summon_box()
+	{
+		if(verifieAction("Voulez vous accepter la session ?"))
+		{
+			return true;
+		}
+		else{return false;}
+	}
+	
+	private boolean verifieAction(String message) {
+	   
+	      if (JOptionPane.showConfirmDialog(null, message,"Ce texte n'est pas enregistré",JOptionPane.YES_NO_OPTION)==1){return false;}
+	      else{return true;}
+	    
+	    
+	  }
 	
 	// CONSTUCT  /////////////////////////////////////////////////////////////////////////////////////////// 
 	public IHM() throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException
@@ -199,8 +216,14 @@ public class IHM extends JFrame {
 		{		
 			public void actionPerformed(ActionEvent e)
 			{
-				choosenone=(String)combo.getSelectedItem();
-				senduser_actionPerformed(e);
+				if(bugjcombo>0)
+				{
+					choosenone=(String)combo.getSelectedItem();
+					senduser_actionPerformed(e);
+					System.out.println("wtf");
+					
+				}
+				bugjcombo=bugjcombo+1;
 			}
 		}
 		);
@@ -237,6 +260,7 @@ public class IHM extends JFrame {
 			            }
 			           
 			        }
+					
 					if(ok)
 					{	
 						nickname = text;

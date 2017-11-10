@@ -18,13 +18,18 @@ public class Serveur implements Runnable, LinkActionListener {
 	final static int MAX_DATA_SIZE = 128;  // Taille maximale des données envoyées
 	private InetAddress addr;
 	private final InetAddress addrmulti = InetAddress.getByName("224.10.5.1");
+	private InetAddress addrpeertempo;
 	private int port;
 	public int ttl;                       // paramètre : time to live
 	private MulticastSocket socket;        // Socket multicast
 	private boolean controle = false;
-	
+	private boolean acceptco=false;
 	private boolean dernierarrivant = false;
-
+	private boolean test =true;
+	private int indicesession=0;
+	private int tableauSession[]= {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+	
+	
 	private String ancienpseudo;
 	private String actuelpseudo="nickname";
 	private long timing ;
@@ -55,22 +60,30 @@ public class Serveur implements Runnable, LinkActionListener {
 		timing = System.currentTimeMillis();
 		new Thread(this).start();
 		
-		sendpacket(2);
+		//sendpacket(2);
 		
 	}
 	
-	public void gestion_control(String addr,String data)
+	private void session(int indicesession,String addrdistante)
 	{
+		Session sess = new Session(indicesession,addrdistante);
+	};
+	
+	public void gestion_control(String addri,String data) throws UnknownHostException
+	{
+			
 		String[] tab = data.split(" ");
     	
     	try {
-			if(tab[0].equals("aaaaaaaaa") && (addr.equals(InetAddress.getLocalHost().getHostAddress())))
+			if(tab[0].equals("aaaaaaaaa") && (addri.equals(InetAddress.getLocalHost().getHostAddress())))
 				{System.out.println("reception trame A");
+				
 				if(dernierarrivant)
 				{
+					addr=InetAddress.getByName(addri);
 					sendpacket(5);
 				} 
-				 hmap.put(tab[1], addr);
+				 hmap.put(tab[1], addri);
 				 interfacee.Set_list_Nick(tab[1]);
 				}
 		} catch (UnknownHostException e) {
@@ -78,7 +91,7 @@ public class Serveur implements Runnable, LinkActionListener {
 			e.printStackTrace();
 		}
     	try {
-			if(tab[0].equals("uuuuuuuuu") && (addr.equals(InetAddress.getLocalHost().getHostAddress())))
+			if(tab[0].equals("uuuuuuuuu") && (addri.equals(InetAddress.getLocalHost().getHostAddress())))
 			{
 				System.out.println("reception trame U");
 				String ancienpseudo = new String();
@@ -93,7 +106,7 @@ public class Serveur implements Runnable, LinkActionListener {
 			e.printStackTrace();
 		}
     	
-    	if(tab[0].equals("qqqqqqqqq") /*&& (addr.equals(InetAddress.getLocalHost().getHostAddress()))*/)
+    	if(tab[0].equals("qqqqqqqqq") /*&& (addri.equals(InetAddress.getLocalHost().getHostAddress()))*/)
     		{
     		 System.out.println("reception trame Q");
     		 hmap.remove(tab[1]);
@@ -101,16 +114,17 @@ public class Serveur implements Runnable, LinkActionListener {
     		 
     		}
     	
-    	if(tab[0].equals("ddddddddd") /*&& (addr.equals(InetAddress.getLocalHost().getHostAddress()))*/)
+    	if(tab[0].equals("ddddddddd") /*&& (addri.equals(InetAddress.getLocalHost().getHostAddress()))*/)
 		{
     		System.out.println("reception trame S");
     		dernierarrivant=true;
 		 
 		}
     	
-    	if(tab[0].equals("iiiiiiiii") /*&& (addr.equals(InetAddress.getLocalHost().getHostAddress()))*/)
+    	if(tab[0].equals("iiiiiiiii") /*&& (addri.equals(InetAddress.getLocalHost().getHostAddress()))*/)
 			{
 				dernierarrivant=true;
+
 				System.out.println("reception trame I");
 				for( int i=1;i<(tab.length)-1;i=i+2)
 					{
@@ -126,6 +140,36 @@ public class Serveur implements Runnable, LinkActionListener {
     	    System.out.println(valeur);
     	    System.out.println("ttt");
     	}*/
+    	
+    	if(tab[0].equals("ccccccccc")/*&& (addri.equals(InetAddress.getLocalHost().getHostAddress()))*/)
+    			{
+    				System.out.println("reception trame C");
+    				if(tab[1].equals("A"))
+    				{
+    					System.out.println("A");
+    					boolean OK;
+    					OK=interfacee.Summon_box();
+    					if(OK)
+    					{
+    					acceptco=true;
+    					session(indicesession,addri);
+    					addr=InetAddress.getByName(addri);
+    					sendpacket(8);
+    					}
+    					else{acceptco=false;}
+    					addr=InetAddress.getByName(addri);
+    					sendpacket(8);
+    				}
+    				
+    				if(tab[1].equals("R"))
+    				{
+    					if(tab[2].equals("OK"))
+    					{
+    						session(indicesession,addri);
+    					}
+    					else{interfacee.affiche("Connexion refusé");}
+    				}
+    			}
     	
     	controle=false;
     }
@@ -162,11 +206,11 @@ public class Serveur implements Runnable, LinkActionListener {
 					{
 					String cle = entry.getKey();
 					String valeur = entry.getValue();
-					temporaire=temporaire +cle+" "+valeur;
+					temporaire=temporaire+" "+cle+" "+valeur;
 					}
   	 
 				//addr=InetAddress.getByName(mess); RECUP ADDR UNICAST VERS dernier (trame A)
-				mess="iiiiiiiii "+temporaire;
+				mess="iiiiiiiii"+temporaire;
 				dernierarrivant=false;
 				break;
 		
@@ -175,21 +219,47 @@ public class Serveur implements Runnable, LinkActionListener {
 				mess="ddddddddd ";
 				break;
 		
+		case 7: System.out.println("paquet lancement C asking");
+				addr=addrpeertempo;
+				mess="ccccccccc A";
+				break;
+				
+		case 8: System.out.println("paquet lancement C response");
+				
+				if(acceptco==true)
+				{
+					mess="ccccccccc A OK";
+				}
+				else
+				{
+					mess="ccccccccc A NO";
+				}
+				
+				break;
+		
 		
 		}
+		
 		return mess;
+		
 	}
 	
 	public void sendpacket(int code)	
 	{
+		
+		
 		String mess;
 		mess = creation_packet(code);
-		//mess= "iiiiiiiii "+"trust"+" 192.168.2.5"+" theo"+ " 198.56.2.3";
+		//TEST
+		
+		if (test){mess= "iiiiiiiii "+"trust"+" 192.168.2.5"+" theo"+ " 192.168.56.1";test=false;}
+		
 		System.out.println(mess);
 		byte [] buffer= mess.getBytes() ;
 	    DatagramPacket datag = new DatagramPacket(buffer,0,buffer.length, addr,port);
 	    try {
 			socket.send(datag);
+			if(code==5 || code==6 || code==8 || code==7){addr=addrmulti;}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -205,6 +275,11 @@ public class Serveur implements Runnable, LinkActionListener {
 		return true;
 		}
 		else{return false;}
+	}
+	
+	public void actionPerformed5(String user, int numsession) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 	public void actionPerformed4(String user) {
@@ -224,8 +299,8 @@ public class Serveur implements Runnable, LinkActionListener {
 			String tempo = InetAddress.getLocalHost().getHostAddress();
 			ancienpseudo=actuelpseudo;
 			actuelpseudo=pseudo;
-			System.out.println("QUOI"); 
-			System.out.println("QUOI   "+ancienpseudo);
+			//System.out.println("QUOI"); 
+			//System.out.println("QUOI   "+ancienpseudo);
 			hmap.remove(ancienpseudo);
 			hmap.put(actuelpseudo, tempo);
 			sendpacket(3);
@@ -257,9 +332,11 @@ public class Serveur implements Runnable, LinkActionListener {
 			//System.out.println(ipdistante);
 			try {
 				InetAddress addrtemporaire=InetAddress.getByName(ipdistante);
-				addr=addrtemporaire;
+				addrpeertempo=addrtemporaire;
 				//System.out.println(addr.toString());
 				interfacee.affiche("connexion to : "+user);
+				sendpacket(7);
+				
 			} catch (UnknownHostException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -281,6 +358,9 @@ public class Serveur implements Runnable, LinkActionListener {
 	{
 		//Check si on est seul
 		if(timing - System.currentTimeMillis() > 1000 ){dernierarrivant=true;}
+		
+		//CONNECTED
+		
 		
 		//RECEPTION
 		byte [] buffer = new byte[MAX_DATA_SIZE];
@@ -304,8 +384,12 @@ public class Serveur implements Runnable, LinkActionListener {
 	        	System.out.println("trame de controle");
 	        	InetAddress addrext = datag.getAddress();
 	        	String addr = addrext.toString();
-	        	
-	        	gestion_control(addr,data);
+	        	try {
+					gestion_control(addr,data);
+				} catch (UnknownHostException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 	        
 	        }
 	        
@@ -325,7 +409,11 @@ public class Serveur implements Runnable, LinkActionListener {
 			IHM interfacee = new IHM();
 		    Serveur serv = new Serveur(interfacee,InetAddress.getByName("224.10.5.1"),555, 10);
 		    
+		    /*String tempo = InetAddress.getLocalHost().getHostAddress();
+			System.out.println(tempo);*/
+		    
 		}
+		
 
 		
 		
