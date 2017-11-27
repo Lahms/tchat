@@ -5,6 +5,7 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
@@ -35,7 +36,7 @@ public class Session extends JFrame {
 	private int delay = 15000; //milliseconds
 	private String texte_date;
 	private JPanel panel1;
-	Vector<LinkActionListener> recepteurs = new Vector<LinkActionListener>(); // liste des recepteurs d'événements
+	Vector<LinkActionListener> recepteurs = new Vector<LinkActionListener>(); // liste des recepteurs d'ï¿½vï¿½nements
 	
 	
 	private JTextArea display;
@@ -50,7 +51,14 @@ public class Session extends JFrame {
 	private JPanel zoneecriture;
 	private JLabel labelnick;
 	
+	Historique hist;
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	
+	public int get_numession()
+	{
+		return numsession;
+	}
 	
 	public InetAddress get_addr()
 	{
@@ -81,6 +89,13 @@ public class Session extends JFrame {
 		for (Enumeration<LinkActionListener> enumere = recepteurs.elements(); enumere.hasMoreElements();)
 		    ((LinkActionListener)enumere.nextElement()).actionPerformed5(str,numsession);
 			System.out.println("TEEXXXTE2 : "+str);
+			this.Affiche(str);
+			try {
+				hist.set_data(str);
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 		    write.setText("");
 		    
 	}
@@ -96,6 +111,8 @@ public class Session extends JFrame {
 			e1.printStackTrace();
 		}
 		
+		hist = new Historique();
+		
 		texte_date = sdf.format(new Date());
 		this.setSize(550,300);
 		panel1 = new JPanel();
@@ -107,7 +124,7 @@ public class Session extends JFrame {
 		zonecanaux = new JPanel();
 		bouton1 = new JButton(" STOP ");
 		this.setTitle("Session n");
-		
+		this.getContentPane().add(panel1);
 		display.setLineWrap(true);
 		display.setWrapStyleWord(true);
 		
@@ -116,7 +133,8 @@ public class Session extends JFrame {
 		JScrollPane scroll = new JScrollPane(display);
 		
 				
-		this.getContentPane().add(panel1);
+
+
 		
 
 		panel1.setLayout(new BorderLayout());	
@@ -131,6 +149,7 @@ public class Session extends JFrame {
 		
 		zonecanaux.add(bouton1);
 		
+		this.Affiche(hist.get_data());
 		
 		// LISTENER ECRITURE TEXTE
 				write.addActionListener(new ActionListener()
@@ -160,8 +179,10 @@ public class Session extends JFrame {
 					{
 						System.out.println("it works");
 						leave_actionPerformed(e);
-						System.exit(0);
+						
+						//System.exit(0);
 					}
+					
 				}
 						);
 				

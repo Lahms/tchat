@@ -19,6 +19,7 @@ public class IHM extends JFrame {
 	private final static String newline = "\n";
 	private final SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm");
 	
+	
 	//GENERAL VAR
 	private String nickname = "nickname";
 	private String choosenone="";
@@ -89,6 +90,7 @@ public class IHM extends JFrame {
 	{
 		for (Enumeration<LinkActionListener> enumere = recepteurs.elements(); enumere.hasMoreElements();)
 		    ((LinkActionListener)enumere.nextElement()).actionPerformed(str);
+			;
 		    write.setText("");
 	}
 	
@@ -235,6 +237,7 @@ public class IHM extends JFrame {
 			public void actionPerformed(ActionEvent e)
 			{
 				 text = write.getText();
+				 
 				 writing_actionPerformed(e, text);
 				
 			}

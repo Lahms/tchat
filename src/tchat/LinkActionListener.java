@@ -2,6 +2,8 @@ package tchat;
 
 import java.io.IOException;
 
+
+// RONNOMER
 public interface LinkActionListener {
 	public void actionPerformed(String mess) ; //sending text
 	public void actionPerformed2(String user); //select nick peer
